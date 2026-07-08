@@ -1,4 +1,4 @@
-# Order Service (OLX Backend Engineer Technical Test)
+# Order Service (OLX Backend Engineer Intern Technical Test)
 
 [![Java 21](https://img.shields.io/badge/Java-21-blue?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot 4.0](https://img.shields.io/badge/Spring_Boot-4.0.7-green?logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)

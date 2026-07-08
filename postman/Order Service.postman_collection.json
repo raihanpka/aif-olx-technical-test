@@ -1,0 +1,626 @@
+{
+  "info": {
+    "name": "Order Service",
+    "description": "Postman collection for the Order Service API. This collection covers all CRUD operations, status transitions, sorting, pagination, and error scenarios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Order",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"Response has orderId\", function () {",
+              "    pm.response.to.have.jsonBody(\"orderId\");",
+              "});",
+              "pm.test(\"Status is CREATED\", function () {",
+              "    pm.expect(pm.response.json().status).to.eql(\"CREATED\");",
+              "});",
+              "pm.test(\"Total amount is computed\", function () {",
+              "    pm.expect(pm.response.json().totalAmount).to.eql(\"3.70\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Andi Wijaya\",\n  \"items\": [\n    {\n      \"productName\": \"Apple\",\n      \"quantity\": 3,\n      \"unitPrice\": 0.50\n    },\n    {\n      \"productName\": \"Bread Loaf\",\n      \"quantity\": 1,\n      \"unitPrice\": 2.20\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders"]
+        },
+        "description": "Creates a new order. The server generates orderId, sets status to CREATED, and computes totalAmount from line items."
+      }
+    },
+    {
+      "name": "Create Order With Empty Items",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Andi Wijaya\",\n  \"items\": []\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders"]
+        },
+        "description": "Expected: 400 Bad Request because order must have at least one line item."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Order With Negative Quantity",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Andi Wijaya\",\n  \"items\": [\n    {\n      \"productName\": \"Apple\",\n      \"quantity\": -1,\n      \"unitPrice\": 0.50\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders"]
+        },
+        "description": "Expected: 400 Bad Request because quantity must be at least 1."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Order By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}"]
+        },
+        "description": "Retrieves an order by its UUID. Replace orderId with a valid order UUID."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Order By Unknown Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders/00000000-0000-0000-0000-000000000000",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "00000000-0000-0000-0000-000000000000"]
+        },
+        "description": "Expected: 404 Not Found because the order ID does not exist."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List Orders Newest First",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders?page=0&size=20&sort=newest",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "newest"
+            }
+          ]
+        },
+        "description": "Lists orders sorted by creation date descending. Default sort if no sort parameter is provided."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List Orders By Highest Total",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders?page=0&size=20&sort=highest_total",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "highest_total"
+            }
+          ]
+        },
+        "description": "Lists orders sorted by total amount descending."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List Orders Oldest Unpaid First",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders?page=0&size=20&sort=oldest_unpaid",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            },
+            {
+              "key": "sort",
+              "value": "oldest_unpaid"
+            }
+          ]
+        },
+        "description": "Lists orders with CREATED status first, sorted by creation date ascending. Paid and other orders appear after."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Order",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Budi Santoso\",\n  \"items\": [\n    {\n      \"productName\": \"Orange\",\n      \"quantity\": 2,\n      \"unitPrice\": 1.00\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}"]
+        },
+        "description": "Updates customer name and items. Items cannot be modified if order status is PAID or beyond. Replace orderId with a valid order UUID."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Customer name updated\", function () {",
+              "    pm.expect(pm.response.json().customerName).to.eql(\"Budi Santoso\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pay Order",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"PAID\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}/status",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Transitions an order from CREATED to PAID. Replace orderId with a valid order UUID in CREATED status."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Status is PAID\", function () {",
+              "    pm.expect(pm.response.json().status).to.eql(\"PAID\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ship Order",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"SHIPPED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}/status",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Transitions an order from PAID to SHIPPED. Replace orderId with a valid order UUID in PAID status."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Status is SHIPPED\", function () {",
+              "    pm.expect(pm.response.json().status).to.eql(\"SHIPPED\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deliver Order",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"DELIVERED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}/status",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Transitions an order from SHIPPED to DELIVERED. Replace orderId with a valid order UUID in SHIPPED status."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Status is DELIVERED\", function () {",
+              "    pm.expect(pm.response.json().status).to.eql(\"DELIVERED\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancel Order",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"CANCELLED\",\n  \"cancellationReason\": \"Customer requested cancellation\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}/status",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Cancels an order. Requires a cancellation reason. Can be performed from CREATED, PAID, or SHIPPED status. Replace orderId with a valid order UUID."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Status is CANCELLED\", function () {",
+              "    pm.expect(pm.response.json().status).to.eql(\"CANCELLED\");",
+              "});",
+              "pm.test(\"Cancellation reason is saved\", function () {",
+              "    pm.expect(pm.response.json().cancellationReason).to.eql(\"Customer requested cancellation\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancel Order Without Reason",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"CANCELLED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}/status",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Expected: 400 Bad Request because cancellation reason is required."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Illegal Status Transition",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"SHIPPED\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}/status",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}", "status"]
+        },
+        "description": "Expected: 409 Conflict. Transitioning an order from CREATED directly to SHIPPED is illegal. Replace orderId with a valid order UUID in CREATED status."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 409\", function () {",
+              "    pm.response.to.have.status(409);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Order",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders/{{orderId}}",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "{{orderId}}"]
+        },
+        "description": "Permanently deletes an order. Returns 204 No Content on success. Replace orderId with a valid order UUID."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Non Existent Order",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/orders/00000000-0000-0000-0000-000000000000",
+          "host": ["http", "localhost"],
+          "port": "8080",
+          "path": ["api", "orders", "00000000-0000-0000-0000-000000000000"]
+        },
+        "description": "Expected: 404 Not Found because the order ID does not exist."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "orderId",
+      "value": "replace-with-valid-order-uuid"
+    }
+  ]
+}
