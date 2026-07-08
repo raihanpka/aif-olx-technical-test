@@ -4,7 +4,7 @@ plugins {
     id("java")
 }
 
-group = "com.aif"
+group = "com.olx"
 version = "1.0.0"
 
 java {
