@@ -36,7 +36,7 @@ Spring Boot backend for a simple ecommerce shop. Handles order CRUD, status life
 
 **Prerequisites**
 - JDK 21 LTS ([Temurin](https://adoptium.net/temurin/releases?version=21&os=any&arch=any) Recommended)
-- IntelliJ IDEA
+- IntelliJ IDEA, Visual Studio Code, or any IDE
 
 ### Step 1: Build the project
 
@@ -311,28 +311,6 @@ Response: 404 Not Found
 ```
 
 HTTP status codes used: 201 Created, 200 OK, 204 No Content, 400 Bad Request, 404 Not Found, 409 Conflict.
-
----
-
-## Build and Run
-
-### Build the project
-
-```bash
-./gradlew build
-```
-
-### Run tests
-
-```bash
-./gradlew test
-```
-
-### Run the service
-
-```bash
-./gradlew bootRun
-```
 
 ---
 
