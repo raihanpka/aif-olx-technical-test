@@ -1,0 +1,12 @@
+.git
+.gitignore
+.gradle
+.idea
+.omo
+.codegraph
+build
+data
+*.md
+*.pdf
+docker-compose.yml
+.DS_Store
