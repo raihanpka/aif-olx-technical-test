@@ -113,13 +113,20 @@ curl "http://localhost:8080/api/orders?page=0&size=20&sort=newest"
 │   │   │   │       └── 📁 web/
 │   │   │   │           ├── 📄 OrderController.java
 │   │   │   │           └── 📄 GlobalExceptionHandler.java
+│   │   │   └── 📁 security/
+│   │   │       ├── 📄 ForbiddenFieldsFilter.java
+│   │   │       └── 📄 BufferedServletWrapper.java
 │   │   └── 📁 resources/
 │   │       └── 📄 application.yml
 │   └── 📁 test/
-│       └── 📁 java/com/aif/orderservice/
-│           └── 📁 order/
+│       └── 📁 java/com/olx/orderservice/
+│           ├── 📁 order/
+│           └── 📁 security/
+│               └── 📄 ForbiddenFieldsFilterTest.java
 ├── 📄 build.gradle.kts
 ├── 📄 settings.gradle.kts
+├── 📄 Dockerfile
+├── 📄 docker-compose.yml
 ├── 📄 README.md
 └── 📄 PLAN.md
 ```
