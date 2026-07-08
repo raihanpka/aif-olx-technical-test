@@ -347,16 +347,89 @@ Configuration is in `src/main/resources/application.yml`.
 - **State Machine for Status Transitions.** The OrderStatus enum contains a transition matrix that defines all legal transitions. The domain model enforces these rules at the behavior level through methods like canTransitionTo. This prevents illegal states from being reached through any code path.
 - **Separate JPA Entities from Domain Model.** JPA entities (OrderEntity, OrderLineItemEntity) are separate classes from the domain model (Order, LineItem). This prevents JPA annotations from leaking into the domain layer and allows the domain model to remain pure Java with framework annotations.
 - **Part 2 Influence on Part 1 Design.** The constrained status transitions, cancellation reason requirement, item immutability after payment, and extensible sorting requirements from Part 2 were all designed into the Part 1 architecture. This minimized code changes when Part 2 requirements were introduced. The state machine was built from the start, the cancellation reason field was included in the domain model, item immutability checks were placed in the domain layer, and sorting was abstracted behind a strategy interface.
-- **Scope Deliberately Omitted.** The following are out of scope: authentication and authorization, API documentation generation (Swagger/OpenAPI), containerization (Docker), integration tests with testcontainers, audit logging, event sourcing, and CQRS.
+- **Scope Deliberately Omitted.** The following are out of scope: authentication and authorization, API documentation generation (Swagger/OpenAPI), integration tests with testcontainers, audit logging, event sourcing, and CQRS.
 - **Future Improvements.** Given more time, the following improvements would be made:
   - Add Spring Security with role based access control
   - Add OpenAPI/Swagger documentation
-  - Add containerization with Docker and Docker Compose
   - Add integration tests with testcontainers for repository testing
   - Add audit logging for order status changes
   - Add idempotency keys for create requests to prevent duplicate orders
   - Implement rate limiting for API endpoints
   - Add metrics and health checks with Spring Boot Actuator
+
+---
+
+## Security Extension
+
+This section addresses hostile input handling and information disclosure as an optional extension. The following measures are implemented to protect the service from malformed or malicious requests.
+
+### Hostile Input Detection
+
+A servlet filter named ForbiddenFieldsFilter intercepts all incoming HTTP requests to the /api/orders endpoints. It inspects POST, PUT, and PATCH request bodies for JSON property keys that must never be supplied by the client. The following fields are server managed and their presence in a request body results in an immediate 400 Bad Request response:
+
+- orderId (server generated UUID, never accepted from client)
+- status (managed through the state machine lifecycle)
+- totalAmount (server computed from line item prices)
+
+The filter uses a regex pattern that matches JSON property key syntax ("key" followed by whitespace and colon) to avoid false positives from string values that happen to contain these words.
+
+### Information Disclosure Prevention
+
+Error responses use a consistent ErrorResponse DTO that exposes only:
+
+- The HTTP status code
+- A short error type description (NotFound, BadRequest, Conflict)
+- A human readable message explaining the specific error
+- A timestamp
+- The request path
+
+Internal implementation details such as stack traces, database errors, or framework internals are never exposed to the client. The GlobalExceptionHandler catches all exceptions and maps them to sanitized responses. Unknown or unexpected errors return a generic message without internal details.
+
+### Access Control
+
+Full access control with authentication and authorization is out of scope for this assessment. The service assumes trusted clients within a protected network. In a production deployment, Spring Security with JWT or OAuth2 would be added to protect the endpoints.
+
+### Justification
+
+Depth over breadth was the guiding principle for this extension. Rather than implementing multiple superficial features, the security filter provides a single focused defense against a specific attack vector identified in the assessment requirements. The implementation is minimal, testable with 5 dedicated test cases, and does not affect the core business logic.
+
+---
+
+## Deployment Extension
+
+The service is packaged for containerized deployment using Docker multi-stage builds. This makes it straightforward to build and run in any container environment.
+
+### Docker Multi Stage Build
+
+The Dockerfile uses two stages:
+
+1. Build stage. Uses the gradle:8.14-jdk21 image to compile the application and run tests. Dependencies are downloaded before source code is copied to leverage Docker layer caching, speeding up subsequent builds.
+2. Runtime stage. Uses the eclipse-temurin:21-jre-jammy image which provides a minimal JRE without build tools. Only the built JAR file is copied from the build stage, reducing the final image size and attack surface.
+
+### Security Hardening
+
+- The application runs as a non-root user (appuser) instead of root
+- The /dev/./urandom entropy source is used for secure random generation
+- apt package lists are cleaned after installing curl to minimize image size
+- A .dockerignore file excludes development files from the build context
+
+### Health Check
+
+A Docker HEALTHCHECK is configured to periodically verify the service is responding by calling the orders list endpoint.
+
+### One Command Startup
+
+A docker-compose.yml file is provided for convenience:
+
+```bash
+docker compose up --build
+```
+
+This builds the image and starts the container with the correct port mapping and a persistent volume for the H2 database file.
+
+### Justification
+
+The deployment extension was chosen because it directly addresses the requirement to make the service straightforward to build and run. A single command starts the entire service without any manual setup. The multi-stage build follows Docker best practices for security and efficiency.
 
 ---
 
