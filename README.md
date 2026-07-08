@@ -5,20 +5,20 @@
 [![Gradle](https://img.shields.io/badge/Gradle-8.x-darkgreen?logo=gradel&logoColor=white)](https://gradle.org/)
 [![H2 Database](https://img.shields.io/badge/Database-H2-orange?logo=h2&logoColor=white)](https://www.h2database.com/)
 
-Spring Boot backend for a simple ecommerce shop implementing an Order Service with full CRUD, RESTful API, order lifecycle management, and extensible sorting. Built with Vertical Slice Architecture and Domain Driven Design.
+Spring Boot backend for a simple ecommerce shop. Handles order CRUD, status lifecycle, and sorting. Built with Vertical Slice Architecture and Domain Driven Design.
 
 ---
 
 ## Features
 
-- **Full CRUD:** Create, read (single and list), update, and delete orders. Data persists across requests using file based H2.
-- **RESTful API Design:** Resource oriented URLs, correct HTTP methods, consistent status codes, input validation, and descriptive error responses.
-- **Order Lifecycle Management:** Status transitions follow a state machine: CREATED, PAID, SHIPPED, DELIVERED, CANCELLED. Illegal transitions are rejected with 409 Conflict.
-- **Server Computed Total:** The order total is calculated from line items on the server. Client supplied total is ignored.
-- **Extensible Sorting:** The list endpoint supports multiple ordering rules: newest, highest total, oldest unpaid. New rules can be added without modifying existing code using the Strategy pattern.
-- **Immutable Items After Payment:** Once an order reaches PAID status, its line items are locked from modification.
-- **Unit Tested:** Business logic, validation, status transitions, and error paths are covered by unit tests. Run with a single command.
-- **Internally Modular:** Domain, application, and infrastructure layers are separated within the order vertical slice.
+- **Full CRUD.** Create, read (single and list), update, and delete. Data persists across restarts via file based H2.
+- **RESTful API.** Resource oriented URLs, proper HTTP methods, consistent status codes, input validation, descriptive error responses.
+- **Order Lifecycle.** State machine based: *CREATED*, *PAID*, *SHIPPED*, *DELIVERED*, *CANCELLED*. Illegal moves return 409 Conflict.
+- **Server Computed Total.** Total is calculated from line items server side. Client cant set it.
+- **Extensible Sorting.** List endpoint supports newest, highest total, oldest unpaid. Adding a sort rule means one new class and one registration. No existing code changes.
+- **Immutable Items After Payment.** Once status hits *PAID*, line items are locked.
+- **Unit Tested.** Business logic, validation, transitions, and error paths all covered. Run with one command.
+- **Internally Modular.** Domain, application, and infrastructure are separated within the order slice.
 
 ---
 
@@ -44,10 +44,22 @@ Spring Boot backend for a simple ecommerce shop implementing an Order Service wi
 ./gradlew build
 ```
 
+Or with the Makefile:
+
+```bash
+make build
+```
+
 ### Step 2: Run the service
 
 ```bash
 ./gradlew bootRun
+```
+
+Or:
+
+```bash
+make run
 ```
 
 The service starts on http://localhost:8080.
@@ -85,63 +97,64 @@ curl "http://localhost:8080/api/orders?page=0&size=20&sort=newest"
 ### Project Structure
 
 ```
-📦 aif-olx-technical-test/
-├── 📁 src/
-│   ├── 📁 main/
-│   │   ├── 📁 java/com/aif/orderservice/
-│   │   │   ├── 📄 OrderServiceApplication.java
-│   │   │   ├── 📁 config/
-│   │   │   │   └── 📄 JacksonConfig.java
-│   │   │   ├── 📁 order/
-│   │   │   │   ├── 📁 domain/
-│   │   │   │   │   ├── 📁 model/
-│   │   │   │   │   │   ├── 📄 Order.java
-│   │   │   │   │   │   ├── 📄 OrderStatus.java
-│   │   │   │   │   │   └── 📄 LineItem.java
-│   │   │   │   │   ├── 📁 service/
-│   │   │   │   │   │   └── 📄 OrderDomainService.java
-│   │   │   │   │   └── 📁 port/
-│   │   │   │   │       └── 📄 OrderRepository.java
-│   │   │   │   ├── 📁 application/
-│   │   │   │   │   ├── 📁 dto/
-│   │   │   │   │   ├── 📁 service/
-│   │   │   │   │   │   ├── 📄 OrderApplicationService.java
-│   │   │   │   │   │   └── 📄 OrderMapper.java
-│   │   │   │   │   └── 📁 exception/
-│   │   │   │   └── 📁 infrastructure/
-│   │   │   │       ├── 📁 persistence/
-│   │   │   │       └── 📁 web/
-│   │   │   │           ├── 📄 OrderController.java
-│   │   │   │           └── 📄 GlobalExceptionHandler.java
-│   │   │   └── 📁 security/
-│   │   │       ├── 📄 ForbiddenFieldsFilter.java
-│   │   │       └── 📄 BufferedServletWrapper.java
-│   │   └── 📁 resources/
-│   │       └── 📄 application.yml
-│   └── 📁 test/
-│       └── 📁 java/com/olx/orderservice/
-│           ├── 📁 order/
-│           └── 📁 security/
-│               └── 📄 ForbiddenFieldsFilterTest.java
-├── 📄 build.gradle.kts
-├── 📄 settings.gradle.kts
-├── 📄 Dockerfile
-├── 📄 docker-compose.yml
-├── 📄 README.md
-└── 📄 PLAN.md
+aif-olx-technical-test/
+├── src/
+│   ├── main/
+│   │   ├── java/com/olx/orderservice/
+│   │   │   ├── OrderServiceApplication.java
+│   │   │   ├── config/
+│   │   │   │   └── JacksonConfig.java
+│   │   │   ├── order/
+│   │   │   │   ├── domain/
+│   │   │   │   │   ├── model/
+│   │   │   │   │   │   ├── Order.java
+│   │   │   │   │   │   ├── OrderStatus.java
+│   │   │   │   │   │   └── LineItem.java
+│   │   │   │   │   ├── service/
+│   │   │   │   │   │   └── OrderDomainService.java
+│   │   │   │   │   └── port/
+│   │   │   │   │       └── OrderRepository.java
+│   │   │   │   ├── application/
+│   │   │   │   │   ├── dto/
+│   │   │   │   │   ├── service/
+│   │   │   │   │   │   ├── OrderApplicationService.java
+│   │   │   │   │   │   └── OrderMapper.java
+│   │   │   │   │   └── exception/
+│   │   │   │   └── infrastructure/
+│   │   │   │       ├── persistence/
+│   │   │   │       └── web/
+│   │   │   │           ├── OrderController.java
+│   │   │   │           └── GlobalExceptionHandler.java
+│   │   │   └── security/
+│   │   │       ├── ForbiddenFieldsFilter.java
+│   │   │       └── BufferedServletWrapper.java
+│   │   └── resources/
+│   │       └── application.yml
+│   └── test/
+│       └── java/com/olx/orderservice/
+│           ├── order/
+│           └── security/
+│               └── ForbiddenFieldsFilterTest.java
+├── build.gradle.kts
+├── settings.gradle.kts
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
 ### Layer Responsibilities
 
-- **Domain Layer:** Pure Java with no framework imports. Contains the Order aggregate root with behavior methods, OrderStatus enum with transition validation, LineItem value object with self validation, OrderDomainService for complex domain rules, and the OrderRepository port interface.
+- **Domain Layer.** Pure Java, zero framework imports. Order aggregate root with behavior methods, OrderStatus with transition validation, LineItem value object, OrderDomainService for rules, and the OrderRepository port interface.
 
-- **Application Layer:** Orchestrates use cases through OrderApplicationService, defines request and response DTOs with Jakarta Validation annotations, handles domain to DTO mapping, and defines domain specific exceptions.
+- **Application Layer.** Use cases live here. OrderApplicationService coordinates operations, DTOs shape request and response data with Jakarta Validation, OrderMapper converts between domain and DTO.
 
-- **Infrastructure Layer:** Implements persistence with Spring Data JPA (JpaOrderRepository, JPA entities separate from domain model), exposes REST endpoints through OrderController, and handles exceptions globally through GlobalExceptionHandler with consistent error response formatting.
+- **Infrastructure Layer.** Spring Data JPA persistence, REST endpoints via OrderController, global error handling via GlobalExceptionHandler, and the ForbiddenFieldsFilter for security.
 
 ---
 
 ## API Reference
+
+A Postman collection covering all endpoints is available at `postman/Order Service.postman_collection.json`. Import it along with `postman/Order Service Environment.postman_environment.json` into Postman, then set the `baseUrl` variable to `http://localhost:8080`.
 
 ### Create Order
 
@@ -215,7 +228,7 @@ Supported sort values: newest, highest_total, oldest_unpaid.
 PUT /api/orders/{orderId}
 ```
 
-Updates customerName and items. Line items cannot be modified if status is PAID or beyond. Returns 400 Bad Request if modification is not allowed.
+Updates customerName and items. Line items cannot be modified if status is *PAID* or beyond. Returns 400 Bad Request if modification is not allowed.
 
 ### Cancel Order
 
@@ -232,7 +245,7 @@ Request Body:
 }
 ```
 
-Legal transitions to CANCELLED: from CREATED, PAID, or SHIPPED. Cancellation requires a reason.
+Legal transitions to *CANCELLED*: from *CREATED*, *PAID*, or *SHIPPED*. Cancellation requires a reason.
 
 ### Pay Order
 
@@ -246,7 +259,7 @@ PATCH /api/orders/{orderId}/status
 }
 ```
 
-Legal transition: from CREATED.
+Legal transition: from *CREATED*.
 
 ### Ship Order
 
@@ -260,7 +273,7 @@ PATCH /api/orders/{orderId}/status
 }
 ```
 
-Legal transition: from PAID.
+Legal transition: from *PAID*.
 
 ### Deliver Order
 
@@ -274,7 +287,7 @@ PATCH /api/orders/{orderId}/status
 }
 ```
 
-Legal transition: from SHIPPED.
+Legal transition: from *SHIPPED*.
 
 ### Delete Order
 
@@ -337,99 +350,114 @@ Configuration is in `src/main/resources/application.yml`.
 
 ## Design Decisions
 
-- **Total Amount is Server Computed.** The client cannot supply totalAmount. The server calculates it as the sum of quantity multiplied by unitPrice for each line item using BigDecimal with scale 2 and HALF_UP rounding. This prevents inconsistencies between line items and the total. If a client provides totalAmount, it is ignored.
-- **Currency Scope.** All monetary values are in a single assumed currency. Currency conversion is out of scope for this assessment. The BigDecimal type with scale 2 is used for all monetary amounts.
-- **H2 Database.** H2 in file mode persists data across restarts without requiring an external database installation. This satisfies the requirement that data must persist across requests. The database file is stored in ./data/orders.
-- **UUID Generation.** The server generates orderId as UUID Version 4. Any orderId supplied by the client in a create request is ignored. In update and delete operations, the path variable orderId is the source of truth.
-- **Hard Delete.** DELETE permanently removes the order from storage. Soft delete was not required and would add unnecessary complexity.
-- **Cancel versus Delete.** Cancel transitions the order status to CANCELLED with a required reason. Delete removes the record permanently. They are separate operations with different semantics.
-- **Strategy Pattern for Sorting.** Sorting rules are implemented using the Strategy pattern. Each sort option is a separate implementation class implementing a common strategy interface. Adding a new sort rule requires creating a new class and registering it in the strategy registry. No existing sort code is modified.
-- **State Machine for Status Transitions.** The OrderStatus enum contains a transition matrix that defines all legal transitions. The domain model enforces these rules at the behavior level through methods like canTransitionTo. This prevents illegal states from being reached through any code path.
-- **Separate JPA Entities from Domain Model.** JPA entities (OrderEntity, OrderLineItemEntity) are separate classes from the domain model (Order, LineItem). This prevents JPA annotations from leaking into the domain layer and allows the domain model to remain pure Java with framework annotations.
-- **Part 2 Influence on Part 1 Design.** The constrained status transitions, cancellation reason requirement, item immutability after payment, and extensible sorting requirements from Part 2 were all designed into the Part 1 architecture. This minimized code changes when Part 2 requirements were introduced. The state machine was built from the start, the cancellation reason field was included in the domain model, item immutability checks were placed in the domain layer, and sorting was abstracted behind a strategy interface.
-- **Scope Deliberately Omitted.** The following are out of scope: authentication and authorization, API documentation generation (Swagger/OpenAPI), integration tests with testcontainers, audit logging, event sourcing, and CQRS.
-- **Future Improvements.** Given more time, the following improvements would be made:
-  - Add Spring Security with role based access control
-  - Add OpenAPI/Swagger documentation
-  - Add integration tests with testcontainers for repository testing
-  - Add audit logging for order status changes
-  - Add idempotency keys for create requests to prevent duplicate orders
-  - Implement rate limiting for API endpoints
-  - Add metrics and health checks with Spring Boot Actuator
+**Vertical Slice Architecture**
+
+Code is organized by feature (order) instead of by technical layer. Each slice holds its own domain, application, and infrastructure packages. This keeps things navigable and isolated. When a new feature comes in, it lives in its own slice without touching unrelated code.
+
+**Total Amount is Server Computed**
+
+The client never sends totalAmount. The server sums up quantity times unitPrice across all items using BigDecimal with scale 2 and HALF_UP rounding. If a client somehow includes totalAmount, its silently ignored.
+
+**Currency Scope**
+
+All money values use a single assumed currency. BigDecimal with scale 2 handles the math. Currency conversion is out of scope.
+
+**H2 Database**
+
+H2 runs in file mode so data sticks around between restarts. No external database needed. The file lives at ./data/orders.
+
+**UUID Generation**
+
+The server generates orderId as UUID v4. Anything the client sends for orderId in a create request gets ignored. Path variable orderId is the only source of truth for updates and deletes.
+
+**Hard Delete**
+
+DELETE actually removes the row. Soft delete would add complexity with no real benefit here.
+
+**Cancel vs Delete**
+
+Cancel changes the order status to *CANCELLED* and requires a reason. Delete wipes the record entirely. Two different operations for two different needs.
+
+**Strategy Pattern for Sorting**
+
+Each sort option is its own class implementing the same interface. A registry maps keys like newest or highest_total to the right implementation. Adding a new sort means writing one class and registering it. Thats it.
+
+**State Machine for Status Transitions**
+
+OrderStatus has a transition matrix baked in. The Order class checks this matrix every time a status change is requested. Illegal moves are caught before they can corrupt state.
+
+**Separate JPA Entities from Domain Model**
+
+JPA annotations live on separate entity classes, not on the domain model. This keeps the domain layer pure Java with zero framework dependencies.
+
+**Part 2 Influence on Part 1 Design**
+
+Part 2 requirements were known before Part 1 was built. The state machine was there from the start. Cancellation reason was part of the domain model. Item lock checks were placed in the domain layer. Sorting was abstracted behind an interface from day one. When Part 2 came around, nothing had to be rewritten.
+
+**Scope Deliberately Omitted**
+
+Authentication and authorization, Swagger documentation, testcontainers integration tests, audit logging, event sourcing, and CQRS were left out to keep the scope focused on what the assessment asks.
+
+**Future Improvements**
+
+- Spring Security for role based access control
+- OpenAPI / Swagger for API docs
+- Integration tests with testcontainers
+- Audit logging for status changes
+- Idempotency keys for create requests
+- Rate limiting
+- Metrics and health checks via Spring Boot Actuator
 
 ---
 
 ## Security Extension
 
-This section addresses hostile input handling and information disclosure as an optional extension. The following measures are implemented to protect the service from malformed or malicious requests.
-
 ### Hostile Input Detection
 
-A servlet filter named ForbiddenFieldsFilter intercepts all incoming HTTP requests to the /api/orders endpoints. It inspects POST, PUT, and PATCH request bodies for JSON property keys that must never be supplied by the client. The following fields are server managed and their presence in a request body results in an immediate 400 Bad Request response:
+A servlet filter (ForbiddenFieldsFilter) checks POST, PUT, and PATCH requests going to `/api/orders`. It looks for JSON keys that should never come from a client:
 
-- orderId (server generated UUID, never accepted from client)
-- status (managed through the state machine lifecycle)
-- totalAmount (server computed from line item prices)
+- `orderId` (server generates this)
+- `status` (the state machine manages this)
+- `totalAmount` (server computes this from line items)
 
-The filter uses a regex pattern that matches JSON property key syntax ("key" followed by whitespace and colon) to avoid false positives from string values that happen to contain these words.
+If any of these show up in the request body, the filter returns 400 Bad Request right away. The regex only matches JSON property key syntax, so string values containing these words wont trigger false alarms. The `/status` endpoint is excluded since *status* is a legitimate field there.
 
-### Information Disclosure Prevention
+### Information Disclosure
 
-Error responses use a consistent ErrorResponse DTO that exposes only:
-
-- The HTTP status code
-- A short error type description (NotFound, BadRequest, Conflict)
-- A human readable message explaining the specific error
-- A timestamp
-- The request path
-
-Internal implementation details such as stack traces, database errors, or framework internals are never exposed to the client. The GlobalExceptionHandler catches all exceptions and maps them to sanitized responses. Unknown or unexpected errors return a generic message without internal details.
+All errors go through a standard ErrorResponse DTO. It exposes status code, error type, message, timestamp, and request path. Stack traces, database errors, or framework internals never leak out. The GlobalExceptionHandler catches everything and maps it to safe responses. Unexpected errors return a generic message.
 
 ### Access Control
 
-Full access control with authentication and authorization is out of scope for this assessment. The service assumes trusted clients within a protected network. In a production deployment, Spring Security with JWT or OAuth2 would be added to protect the endpoints.
-
-### Justification
-
-Depth over breadth was the guiding principle for this extension. Rather than implementing multiple superficial features, the security filter provides a single focused defense against a specific attack vector identified in the assessment requirements. The implementation is minimal, testable with 5 dedicated test cases, and does not affect the core business logic.
+Authentication and authorization are out of scope. The service assumes trusted clients on a protected network. A production setup would add Spring Security with JWT or OAuth2.
 
 ---
 
 ## Deployment Extension
 
-The service is packaged for containerized deployment using Docker multi-stage builds. This makes it straightforward to build and run in any container environment.
+The service ships as a Docker image. Two commands get it running anywhere Docker is installed.
 
-### Docker Multi Stage Build
+### Multi Stage Build
 
-The Dockerfile uses two stages:
+The Dockerfile has two stages:
 
-1. Build stage. Uses the gradle:8.14-jdk21 image to compile the application and run tests. Dependencies are downloaded before source code is copied to leverage Docker layer caching, speeding up subsequent builds.
-2. Runtime stage. Uses the eclipse-temurin:21-jre-jammy image which provides a minimal JRE without build tools. Only the built JAR file is copied from the build stage, reducing the final image size and attack surface.
+1. Build. Gradle image compiles the app. Dependencies download before source code copies over, so Docker layer caching kicks in on rebuilds.
+2. Runtime. Minimal JRE image runs the jar. Nothing but the built artifact makes it into the final image.
 
-### Security Hardening
+### Hardening
 
-- The application runs as a non-root user (appuser) instead of root
-- The /dev/./urandom entropy source is used for secure random generation
-- apt package lists are cleaned after installing curl to minimize image size
-- A .dockerignore file excludes development files from the build context
+- Runs as `appuser`, not root
+- Uses `/dev/./urandom` for secure random
+- Cleans apt lists after installing curl
+- `.dockerignore` keeps dev files out of the build context
+- HEALTHCHECK polls the API every 30 seconds
 
-### Health Check
-
-A Docker HEALTHCHECK is configured to periodically verify the service is responding by calling the orders list endpoint.
-
-### One Command Startup
-
-A docker-compose.yml file is provided for convenience:
+### One Command
 
 ```bash
 docker compose up --build
 ```
 
-This builds the image and starts the container with the correct port mapping and a persistent volume for the H2 database file.
-
-### Justification
-
-The deployment extension was chosen because it directly addresses the requirement to make the service straightforward to build and run. A single command starts the entire service without any manual setup. The multi-stage build follows Docker best practices for security and efficiency.
+That builds the image, starts the container, maps port 8080, and mounts a volume for the H2 database file.
 
 ---
 
