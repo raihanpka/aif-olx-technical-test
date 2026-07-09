@@ -9,6 +9,20 @@
       "name": "Create Order",
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Auto-set baseUrl if not configured",
+              "if (!pm.environment.get(\"baseUrl\")) {",
+              "  pm.environment.set(\"baseUrl\", \"http://localhost:8080\");",
+              "}",
+              "// Reset stale variables from previous runs",
+              "pm.environment.unset(\"orderId\");",
+              "pm.environment.unset(\"mainOrderId\");"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -23,7 +37,15 @@
               "});",
               "pm.test(\"Total amount is computed\", function () {",
               "    pm.expect(pm.response.json().totalAmount).to.eql(\"3.70\");",
-              "});"
+              "});",
+              "",
+              "// Extract orderId for subsequent requests",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"orderId\", jsonData.orderId);",
+              "pm.collectionVariables.set(\"orderId\", jsonData.orderId);",
+              "",
+              "// Save original orderId for status transition tests and Delete Order",
+              "pm.environment.set(\"mainOrderId\", jsonData.orderId);"
             ]
           }
         }
@@ -475,6 +497,29 @@
       },
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Create a fresh order for this test so status is CREATED (not affected by prior Pay/Ship/Deliver)",
+              "var createReq = {",
+              "  url: (pm.environment.get(\"baseUrl\") || \"http://localhost:8080\") + \"/api/orders\",",
+              "  method: \"POST\",",
+              "  header: { \"Content-Type\": \"application/json\" },",
+              "  body: {",
+              "    mode: \"raw\",",
+              "    raw: JSON.stringify({ customerName: \"Test\", items: [{ productName: \"X\", quantity: 1, unitPrice: 1.00 }] })",
+              "  }",
+              "};",
+              "pm.sendRequest(createReq, function (err, res) {",
+              "  if (err) { console.error(err); return; }",
+              "  var resp = res.json();",
+              "  pm.environment.set(\"orderId\", resp.orderId);",
+              "  pm.collectionVariables.set(\"orderId\", resp.orderId);",
+              "});"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -517,6 +562,29 @@
       },
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Create a fresh order for this test so it is in CREATED status",
+              "var createReq = {",
+              "  url: (pm.environment.get(\"baseUrl\") || \"http://localhost:8080\") + \"/api/orders\",",
+              "  method: \"POST\",",
+              "  header: { \"Content-Type\": \"application/json\" },",
+              "  body: {",
+              "    mode: \"raw\",",
+              "    raw: JSON.stringify({ customerName: \"Test\", items: [{ productName: \"X\", quantity: 1, unitPrice: 1.00 }] })",
+              "  }",
+              "};",
+              "pm.sendRequest(createReq, function (err, res) {",
+              "  if (err) { console.error(err); return; }",
+              "  var resp = res.json();",
+              "  pm.environment.set(\"orderId\", resp.orderId);",
+              "  pm.collectionVariables.set(\"orderId\", resp.orderId);",
+              "});"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -553,6 +621,29 @@
       },
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Create a fresh order for this test so it is in CREATED status",
+              "var createReq = {",
+              "  url: (pm.environment.get(\"baseUrl\") || \"http://localhost:8080\") + \"/api/orders\",",
+              "  method: \"POST\",",
+              "  header: { \"Content-Type\": \"application/json\" },",
+              "  body: {",
+              "    mode: \"raw\",",
+              "    raw: JSON.stringify({ customerName: \"Test\", items: [{ productName: \"X\", quantity: 1, unitPrice: 1.00 }] })",
+              "  }",
+              "};",
+              "pm.sendRequest(createReq, function (err, res) {",
+              "  if (err) { console.error(err); return; }",
+              "  var resp = res.json();",
+              "  pm.environment.set(\"orderId\", resp.orderId);",
+              "  pm.collectionVariables.set(\"orderId\", resp.orderId);",
+              "});"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "exec": [
@@ -570,10 +661,10 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "http://localhost:8080/api/orders/{{orderId}}",
+          "raw": "http://localhost:8080/api/orders/{{mainOrderId}}",
           "host": ["http", "localhost"],
           "port": "8080",
-          "path": ["api", "orders", "{{orderId}}"]
+          "path": ["api", "orders", "{{mainOrderId}}"]
         },
         "description": "Permanently deletes an order. Returns 204 No Content on success. Replace orderId with a valid order UUID."
       },
@@ -620,7 +711,11 @@
   "variable": [
     {
       "key": "orderId",
-      "value": "replace-with-valid-order-uuid"
+      "value": ""
+    },
+    {
+      "key": "mainOrderId",
+      "value": ""
     }
   ]
 }

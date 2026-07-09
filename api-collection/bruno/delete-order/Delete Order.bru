@@ -1,0 +1,32 @@
+meta {
+  name: Delete Order
+  method: DELETE
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+delete {
+  url: {{baseUrl}}/api/orders
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  const baseUrl = bru.getEnvVar('baseUrl');
+  const resp = await bru.sendRequest({
+    url: baseUrl + '/api/orders',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      customerName: 'Test',
+      items: [{ productName: 'X', quantity: 1, unitPrice: 1.00 }]
+    }
+  });
+  req.setUrl(baseUrl + '/api/orders/' + resp.data.orderId);
+}
+
+tests {
+  test("Status code is 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

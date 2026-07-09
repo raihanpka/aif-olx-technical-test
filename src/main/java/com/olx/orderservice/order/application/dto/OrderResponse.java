@@ -1,5 +1,6 @@
 package com.olx.orderservice.order.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.olx.orderservice.order.domain.model.OrderStatus;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ public class OrderResponse {
     private String customerName;
     private List<LineItemResponse> items;
     private OrderStatus status;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal totalAmount;
     private String cancellationReason;
     private Instant createdAt;

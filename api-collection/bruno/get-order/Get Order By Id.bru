@@ -1,0 +1,32 @@
+meta {
+  name: Get Order By Id
+  method: GET
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+get {
+  url: {{baseUrl}}/api/orders
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  const baseUrl = bru.getEnvVar('baseUrl');
+  const resp = await bru.sendRequest({
+    url: baseUrl + '/api/orders',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      customerName: 'Andi Wijaya',
+      items: [{ productName: 'Apple', quantity: 3, unitPrice: 0.50 }, { productName: 'Bread Loaf', quantity: 1, unitPrice: 2.20 }]
+    }
+  });
+  req.setUrl(baseUrl + '/api/orders/' + resp.data.orderId);
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

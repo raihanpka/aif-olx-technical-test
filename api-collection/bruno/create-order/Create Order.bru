@@ -1,0 +1,50 @@
+meta {
+  name: Create Order
+  method: POST
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "Andi Wijaya",
+    "items": [
+      { "productName": "Apple", "quantity": 3, "unitPrice": 0.50 },
+      { "productName": "Bread Loaf", "quantity": 1, "unitPrice": 2.20 }
+    ]
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  bru.setEnvVar("orderId", body.orderId);
+  bru.setEnvVar("mainOrderId", body.orderId);
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response has orderId", function() {
+    expect(res.getBody()).to.have.property("orderId");
+  });
+
+  test("Status is CREATED", function() {
+    expect(res.getBody().status).to.equal("CREATED");
+  });
+
+  test("Total amount is computed", function() {
+    expect(res.getBody().totalAmount).to.equal("3.70");
+  });
+}

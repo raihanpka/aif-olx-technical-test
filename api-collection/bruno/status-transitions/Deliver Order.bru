@@ -1,0 +1,65 @@
+meta {
+  name: Deliver Order
+  method: PUT
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "DELIVERED"
+  }
+}
+
+script:pre-request {
+  const baseUrl = bru.getEnvVar('baseUrl');
+  // 1. Create order
+  const createResp = await bru.sendRequest({
+    url: baseUrl + '/api/orders',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      customerName: 'Test',
+      items: [{ productName: 'X', quantity: 1, unitPrice: 1.00 }]
+    }
+  });
+  const orderId = createResp.data.orderId;
+
+  // 2. Pay the order
+  await bru.sendRequest({
+    url: baseUrl + '/api/orders/' + orderId + '/status',
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    data: { status: 'PAID' }
+  });
+
+  // 3. Ship the order
+  await bru.sendRequest({
+    url: baseUrl + '/api/orders/' + orderId + '/status',
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    data: { status: 'SHIPPED' }
+  });
+
+  req.setUrl(baseUrl + '/api/orders/' + orderId + '/status');
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Status is DELIVERED", function() {
+    expect(res.getBody().status).to.equal("DELIVERED");
+  });
+}

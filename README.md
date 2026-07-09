@@ -135,6 +135,9 @@ aif-olx-technical-test/
 │           ├── order/
 │           └── security/
 │               └── ForbiddenFieldsFilterTest.java
+├── api-collection/
+│   ├── postman/
+│   └── bruno/
 ├── build.gradle.kts
 ├── settings.gradle.kts
 ├── Dockerfile
@@ -154,7 +157,23 @@ aif-olx-technical-test/
 
 ## API Reference
 
-A Postman collection covering all endpoints is available at `postman/Order Service.postman_collection.json`. Import it along with `postman/Order Service Environment.postman_environment.json` into Postman, then set the `baseUrl` variable to `http://localhost:8080`.
+API collections for both **Postman** and **Bruno** are available in `api-collection/`.
+
+### Postman
+
+Import `api-collection/postman/Order Service.postman_collection.json` into Postman. The environment file `api-collection/postman/Order Service Environment.postman_environment.json` is optional — the collection auto-sets `baseUrl` to `http://localhost:8080` and extracts `orderId` from the Create Order response.
+
+Run the entire collection (File → Run Collection) — all 17 requests execute in sequence with zero manual config.
+
+### Bruno
+
+```
+brew install bruno-cli        # if not already installed
+cd api-collection/bruno
+bru run -r --env-file env/env.json
+```
+
+All 17 requests run recursively with assertions validating every endpoint. Environment variables (`baseUrl`, `orderId`, `mainOrderId`) are pre-configured in `env/env.json`.
 
 ### Create Order
 

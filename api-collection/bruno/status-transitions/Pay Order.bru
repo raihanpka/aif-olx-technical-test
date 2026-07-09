@@ -1,0 +1,46 @@
+meta {
+  name: Pay Order
+  method: PUT
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "PAID"
+  }
+}
+
+script:pre-request {
+  const baseUrl = bru.getEnvVar('baseUrl');
+  const resp = await bru.sendRequest({
+    url: baseUrl + '/api/orders',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      customerName: 'Test',
+      items: [{ productName: 'X', quantity: 1, unitPrice: 1.00 }]
+    }
+  });
+  req.setUrl(baseUrl + '/api/orders/' + resp.data.orderId + '/status');
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Status is PAID", function() {
+    expect(res.getBody().status).to.equal("PAID");
+  });
+}

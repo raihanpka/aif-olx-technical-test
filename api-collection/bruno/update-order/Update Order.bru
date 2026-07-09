@@ -1,0 +1,49 @@
+meta {
+  name: Update Order
+  method: PUT
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "Budi Santoso",
+    "items": [
+      { "productName": "Orange", "quantity": 2, "unitPrice": 1.00 }
+    ]
+  }
+}
+
+script:pre-request {
+  const baseUrl = bru.getEnvVar('baseUrl');
+  const resp = await bru.sendRequest({
+    url: baseUrl + '/api/orders',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      customerName: 'Andi Wijaya',
+      items: [{ productName: 'Apple', quantity: 3, unitPrice: 0.50 }]
+    }
+  });
+  req.setUrl(baseUrl + '/api/orders/' + resp.data.orderId);
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Customer name updated", function() {
+    expect(res.getBody().customerName).to.equal("Budi Santoso");
+  });
+}

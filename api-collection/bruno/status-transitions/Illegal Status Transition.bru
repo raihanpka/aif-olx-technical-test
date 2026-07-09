@@ -1,0 +1,42 @@
+meta {
+  name: Illegal Status Transition
+  method: PUT
+  url: {{baseUrl}}/api/orders
+  type: http
+}
+
+put {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "SHIPPED"
+  }
+}
+
+script:pre-request {
+  const baseUrl = bru.getEnvVar('baseUrl');
+  const resp = await bru.sendRequest({
+    url: baseUrl + '/api/orders',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      customerName: 'Test',
+      items: [{ productName: 'X', quantity: 1, unitPrice: 1.00 }]
+    }
+  });
+  req.setUrl(baseUrl + '/api/orders/' + resp.data.orderId + '/status');
+}
+
+tests {
+  test("Status code is 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+}

@@ -1,0 +1,18 @@
+meta {
+  name: Delete Non Existent Order
+  method: DELETE
+  url: {{baseUrl}}/api/orders/00000000-0000-0000-0000-000000000000
+  type: http
+}
+
+delete {
+  url: {{baseUrl}}/api/orders/00000000-0000-0000-0000-000000000000
+  body: none
+  auth: none
+}
+
+tests {
+  test("Status code is 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

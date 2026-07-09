@@ -1,0 +1,18 @@
+meta {
+  name: List Orders By Highest Total
+  method: GET
+  url: {{baseUrl}}/api/orders?page=0&size=20&sort=highest_total
+  type: http
+}
+
+get {
+  url: {{baseUrl}}/api/orders?page=0&size=20&sort=highest_total
+  body: none
+  auth: none
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
